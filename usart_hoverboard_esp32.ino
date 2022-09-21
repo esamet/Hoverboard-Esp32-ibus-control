@@ -39,6 +39,7 @@ Servo myservo;
 
 #include <SoftwareSerial.h>
 SoftwareSerial HoverSerial(2,3);        // RX, TX
+SoftwareSerial HoverSerial2(12,13);        // RX, TX
 
 // Global variables
 uint8_t idx = 0;                        // Index for new data pointer
@@ -76,6 +77,8 @@ void setup()
   Serial.println("Hoverboard Serial v1.0");
   IBus.begin(Serial2,1);
   HoverSerial.begin(HOVER_SERIAL_BAUD);
+  HoverSerial2.begin(HOVER_SERIAL_BAUD);
+
   pinMode(LED_BUILTIN, OUTPUT);
   myservo.attach(18);
   Serial.println("Start IBus2PWM_ESP32");
@@ -92,6 +95,8 @@ void Send(int16_t uSteer, int16_t uSpeed)
 
   // Write to Serial
   HoverSerial.write((uint8_t *) &Command, sizeof(Command)); 
+  HoverSerial2.write((uint8_t *) &Command, sizeof(Command)); 
+
 }
 
 // ########################## RECEIVE ##########################
@@ -165,6 +170,8 @@ void loop(void)
   steer= IBus.readChannel(0); // get latest value for servo channel 1
   speedo = IBus.readChannel(1);
   steer=map(steer,1000,2000,-1000,1000);
+  speedo=map(speedo,1000,2000,-1000,1000);
+
   unsigned long timeNow = millis();
 
   // Check for new received data
@@ -173,8 +180,10 @@ void loop(void)
   // Send commands
   if (iTimeSend > timeNow) return;
   iTimeSend = timeNow + TIME_SEND;
-  Send(0, steer);
+  Send(speedo, steer);
   Serial.println(steer);
+  Serial.println(speedo);
+
 
   // Calculate test command signal
   iTest += iStep;
